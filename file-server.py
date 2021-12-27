@@ -19,7 +19,7 @@ from starlette.responses import FileResponse, HTMLResponse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--static_path", type=str, required=True, help="path to static files.")
-parser.add_argument("--prefix", type=str, default="/", help="url prefix eg:\033[31m/\033[0mstatic\033[31m/\033[0m [\033[31mtwo / !!\033[0]")
+parser.add_argument("--prefix", type=str, default="/", help="url prefix eg:\033[31m/\033[0mstatic\033[31m/\033[0m [\033[31mtwo / !!\033[0m]")
 parser.add_argument("--port", type=int, default=8080, help="port")
 args = parser.parse_args()
 
