@@ -3,7 +3,7 @@
 '''
 @File    :   file_server.py
 @Time    :   2021/12/27 19:56:49
-@Author  :   Ricardo.张葆杰
+@Author  :   Ricardo
 @Version :   1.0
 @Contact :   bj.zhang@tianrang-inc.com
 @Desc    :   文件下载服务器
