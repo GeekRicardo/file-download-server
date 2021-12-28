@@ -47,7 +47,7 @@ async def get_file(filename: str):
 
 def get_file_list(path):
     return """<ul>{}</ul>""".format("\n".join([
-        "<li><a href='/{0}'>{0}</li>".format(it.replace(static_path + "/", ""))
+        "<li><a href='{0}{1}'>{1}</li>".format(args.prefix, it.replace(static_path + "/", ""))
         for it in glob(path + "/*")
     ]))
 
