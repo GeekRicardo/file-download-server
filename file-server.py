@@ -12,6 +12,7 @@
 # here put the import lib
 import uvicorn
 import os
+import sys
 import argparse
 from glob import glob
 from fastapi import FastAPI
@@ -22,6 +23,10 @@ parser.add_argument("--static_path", type=str, required=True, help="path to stat
 parser.add_argument("--prefix", type=str, default="/", help="url prefix eg:\033[31m/\033[0mstatic\033[31m/\033[0m [\033[31mtwo / !!\033[0m]")
 parser.add_argument("--port", type=int, default=8080, help="port")
 args = parser.parse_args()
+
+if not args.prefix[0] == args.prefix[-1] == "/":
+    print("prefix error!")
+    sys.exit(1)
 
 app = FastAPI()
 static_path = os.path.abspath(args.static_path)
