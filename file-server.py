@@ -16,7 +16,7 @@ import sys
 import argparse
 from glob import glob
 from fastapi import FastAPI
-from starlette.responses import FileResponse, HTMLResponse
+from starlette.responses import FileResponse, HTMLResponse, Response
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -41,6 +41,11 @@ app = FastAPI()
 static_path = os.path.abspath(args.static_path)
 
 
+@app.get("/robots.txt")
+def robots_txt():
+    return Response("""User-Agent: *
+Disallow: /""")
+
 @app.get(args.prefix)
 def index():
     html = get_file_list(static_path)
@@ -57,7 +62,6 @@ async def get_file(filename: str):
         return HTMLResponse(get_file_list(path))
     response = FileResponse(path)
     return response
-
 
 def get_file_list(path):
     sub_path = [it for it in path.replace(static_path, "").rsplit("/") if it]
