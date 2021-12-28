@@ -71,8 +71,8 @@ def get_file_list(path):
         ),
         "\n".join(
             [
-                "<li><a href='{0}{1}'>{2}</a></li>".format(
-                    args.prefix, it.replace(static_path + "/", ""), os.path.basename(it)
+                "<li><a href='{0}{1}'>{0}{1}</a></li>".format(
+                    os.path.basename(it), "/" if os.path.isdir(it) else ""
                 )
                 for it in glob(path + "/*")
             ],
