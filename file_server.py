@@ -43,8 +43,11 @@ static_path = os.path.abspath(args.static_path)
 
 @app.get("/robots.txt")
 def robots_txt():
-    return Response("""User-Agent: *
-Disallow: /""")
+    return Response(
+        """User-Agent: *
+Disallow: /"""
+    )
+
 
 @app.get(args.prefix)
 def index():
@@ -63,11 +66,12 @@ async def get_file(filename: str):
     response = FileResponse(path)
     return response
 
+
 def get_file_list(path):
     sub_path = [it for it in path.replace(static_path, "").rsplit("/") if it]
     return """<html><head><style>span:hover{{background-color:#f2f2f2}}</style></head><body><h2>{0}</h2><ul>{1}</ul></body></html>""".format(
         "→".join(
-            ['<a href="/"><span> / </span></a>']
+            [f'<a href="{args.prefix}"><span> / </span></a>']
             + [
                 f'<a href="{args.prefix}{"/".join([_ for _ in sub_path[:sub_path.index(it) + 1]])}"><span>{it}</span></a>'
                 for it in sub_path
