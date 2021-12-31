@@ -10,8 +10,8 @@
 
 ```python file_server.py --static_path {path} --port {port} --prefix {url_prefix}```
 
-**required**: `--static_path`
-**deault**: 
+**required**: `--static_path` <br/>
+**default**: 
   - `--port`  `8000`
   - `--prefix` `/`
 
