@@ -60,7 +60,10 @@ async def get_file(filename: str):
     print(filename)
     path = os.path.join(static_path, filename)
     if not os.path.exists(path):
-        return {"success": False, "msg": "文件不存在！"}
+        return Response(
+            content="file not exists!",
+            status_code=404,
+        )
     elif os.path.isdir(path):
         return HTMLResponse(get_file_list(path))
     response = FileResponse(path)
