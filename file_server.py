@@ -20,7 +20,7 @@ from starlette.responses import FileResponse, HTMLResponse, Response
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "static_path" ,"--static_path", type=str, required=True, help="path to static files."
+    "-d" ,"--static_path", type=str, required=True, help="path to static files."
 )
 parser.add_argument(
     "--prefix",
