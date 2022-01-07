@@ -4,7 +4,7 @@
 @File    :   file_server.py
 @Time    :   2021/12/27 19:56:49
 @Author  :   Ricardo
-@Version :   1.0
+@Version :   1.0.2
 @Contact :   bj.zhang@tianrang-inc.com
 @Desc    :   文件下载服务器
 """
@@ -14,6 +14,7 @@ import uvicorn
 import os
 import sys
 import argparse
+import hashlib
 from glob import glob
 from fastapi import FastAPI
 from starlette.responses import FileResponse, HTMLResponse, Response
@@ -57,7 +58,6 @@ def index():
 
 @app.get(args.prefix + "{filename:path}")
 async def get_file(filename: str):
-    print(filename)
     path = os.path.join(static_path, filename)
     if not os.path.exists(path):
         return Response(
@@ -67,6 +67,24 @@ async def get_file(filename: str):
     elif os.path.isdir(path):
         return HTMLResponse(get_file_list(path))
     response = FileResponse(path)
+    return response
+
+
+@app.get(args.prefix + "md5/{filename:path}")
+async def md5(filename: str):
+    path = os.path.join(static_path, filename)
+    if not os.path.exists(path):
+        return Response(
+            content="file not exists!",
+            status_code=404,
+        )
+    elif os.path.isdir(path):
+        return Response(content="is a directory")
+
+    with open(path, "rb") as f:
+        data = f.read()
+    file_md5 = hashlib.md5(data).hexdigest()
+    response = Response(content=file_md5)
     return response
 
 
