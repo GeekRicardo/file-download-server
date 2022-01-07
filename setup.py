@@ -7,6 +7,6 @@ setup(
     author="Ricardo",
     author_email="GeekRicardozzZ@gmail.com",
     url="https://github.com/GeekRicardo/file-download-server",
-    install_requires=["fastapi", "uvicorn"]
+    install_requires=["fastapi", "uvicorn"],
     description="A simple file server",
 )
