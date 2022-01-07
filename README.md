@@ -2,29 +2,21 @@
 
 ## Usage
 
-1. install requirements
+1. Install 
 
-`pip install fastapi uvicorn`
+`pip install file_download_server`
 
 2. create server
 
-```python file_server.py --static_path {path} --port {port} --prefix {url_prefix}```
+```python -m file_server --static_path {path} --port {port} --prefix {url_prefix}```
 
-**required**: `--static_path` <br/>
-**default**: 
-  - `--port`  `8000`
-  - `--prefix` `/`
+**required**: `--static_path/-d`
 
-also you can run as python module:
-
-```bash
-$ mv file_server.py  path_to_your_python_lib_path/site-packages/
-$ python -m file_server --static_path {path}
-
-```
+**note**:
+    you can get file md5 in path `/{prefix}/md5/{file_name}`
+>>>>>>> c0c2756b15765c6b887aac38d474f1c369c67a03
 
 ## 为什么要写这个脚本
 为什么不直接`python -m http.server`,很简单，
 1. http.server 只能单线程下载，有人在下别人就下不了;而且速度不知道为啥慢的不行
 2. http.server 不支持url二级路径, 当我用nginx反向代理时就用不了了
-3. 拿fastapi练练手
