@@ -21,7 +21,7 @@ from starlette.responses import FileResponse, HTMLResponse, Response
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-d" ,"--static_path", type=str, required=True, help="path to static files."
+    "-d", "--static_path", type=str, required=True, help="path to static files."
 )
 parser.add_argument(
     "--prefix",
@@ -56,20 +56,6 @@ def index():
     return HTMLResponse(html)
 
 
-@app.get(args.prefix + "{filename:path}")
-async def get_file(filename: str):
-    path = os.path.join(static_path, filename)
-    if not os.path.exists(path):
-        return Response(
-            content="file not exists!",
-            status_code=404,
-        )
-    elif os.path.isdir(path):
-        return HTMLResponse(get_file_list(path))
-    response = FileResponse(path)
-    return response
-
-
 @app.get(args.prefix + "md5/{filename:path}")
 async def md5(filename: str):
     path = os.path.join(static_path, filename)
@@ -85,6 +71,20 @@ async def md5(filename: str):
         data = f.read()
     file_md5 = hashlib.md5(data).hexdigest()
     response = Response(content=file_md5)
+    return response
+
+
+@app.get(args.prefix + "{filename:path}")
+async def get_file(filename: str):
+    path = os.path.join(static_path, filename)
+    if not os.path.exists(path):
+        return Response(
+            content="file not exists!",
+            status_code=404,
+        )
+    elif os.path.isdir(path):
+        return HTMLResponse(get_file_list(path))
+    response = FileResponse(path)
     return response
 
 
