@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="file_download_server",
-    version="1.0.4",
+    version="1.0.5",
     packages=["."],
     author="Ricardo",
     author_email="GeekRicardozzZ@gmail.com",
