@@ -12,11 +12,12 @@
 # here put the import lib
 import uvicorn
 import os
+import time
 import sys
 import argparse
 import hashlib
 from glob import glob
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from starlette.responses import FileResponse, HTMLResponse, Response
 
 
@@ -38,6 +39,11 @@ def parse_args():
     return args.static_path, args.prefix, args.port
 
 
+def TimeStampToTime(timestamp):
+    timeStruct = time.localtime(timestamp)
+    return time.strftime("%Y-%m-%d %H:%M:%S", timeStruct)
+
+
 def server(static_path, prefix="/", port=8000):
     if not prefix[0] == prefix[-1] == "/":
         print(
@@ -57,9 +63,29 @@ def server(static_path, prefix="/", port=8000):
         )
 
     @app.get(prefix)
-    def index():
-        html = get_file_list(static_path)
+    def index(t: int = 0):
+        html = get_file_list(static_path, t)
         return HTMLResponse(html)
+
+    @app.get(prefix + "upload")
+    def upload_page():
+        return HTMLResponse(
+            """<form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" id="file">
+            <input type="submit" value="上传">
+        </form>"""
+        )
+
+    @app.post(prefix + "upload")
+    async def uploads(file: UploadFile = File(...)):
+
+        image_bytes = await file.read()
+        file_name = file.filename
+        save_path = os.path.join(static_path, file_name)
+        if not os.path.exists(save_path):
+            with open(save_path, "wb") as f:
+                f.write(image_bytes)
+        return Response(status_code=200, content=file_name)
 
     @app.get(prefix + "md5/{filename:path}")
     async def md5(filename: str):
@@ -91,9 +117,9 @@ def server(static_path, prefix="/", port=8000):
         response = FileResponse(path)
         return response
 
-    def get_file_list(path):
+    def get_file_list(path, show_time=0):
         sub_path = [it for it in path.replace(static_path, "").rsplit("/") if it]
-        return """<html><head><style>span:hover{{background-color:#f2f2f2}}</style></head><body><h2>{0}</h2><ul>{1}</ul></body></html>""".format(
+        return """<html><head><style>span:hover{{background-color:#f2f2f2}}li{{weight:70%;}}</style></head><body><h2>{0}</h2><ul>{1}</ul></body></html>""".format(
             "→".join(
                 [f'<a href="{prefix}"><span> / </span></a>']
                 + [
@@ -103,8 +129,10 @@ def server(static_path, prefix="/", port=8000):
             ),
             "\n".join(
                 [
-                    "<li><a href='{0}{1}'>{0}{1}</a></li>".format(
-                        os.path.basename(it), "/" if os.path.isdir(it) else ""
+                    "<li><a href='{0}{1}'>{0}{1}</a>{2}</li>".format(
+                        os.path.basename(it),
+                        "/" if os.path.isdir(it) else "",
+                        TimeStampToTime(os.path.getmtime(it)) if show_time != 0 else "",
                     )
                     for it in glob(path + "/*")
                 ],
