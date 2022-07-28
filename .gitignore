@@ -2,3 +2,4 @@ build/
 dist/
 MANIFEST
 file_download_server*/
+__pycached__/
