@@ -123,7 +123,7 @@ def server(static_path, prefix="/", port=8000):
             "→".join(
                 [f'<a href="{prefix}"><span> / </span></a>']
                 + [
-                    f'<a href="{prefix}{"/".join([_ for _ in sub_path[:sub_path.index(it) + 1]])}"><span>{it}</span></a>'
+                    f'<a href="{prefix}{"/".join([_ for _ in sub_path[:sub_path.index(it) + 1]])}/"><span>{it}</span></a>'
                     for it in sub_path
                 ]
             ),
