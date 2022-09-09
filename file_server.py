@@ -10,6 +10,9 @@
 """
 
 # here put the import lib
+from email.utils import formatdate
+import re
+import stat
 import uvicorn
 import os
 import time
@@ -17,8 +20,11 @@ import sys
 import argparse
 import hashlib
 from glob import glob
-from fastapi import FastAPI, UploadFile, File
-from starlette.responses import FileResponse, HTMLResponse, Response
+from urllib.parse import quote
+from mimetypes import guess_type
+
+from fastapi import FastAPI, UploadFile, File, Request
+from starlette.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 
 
 def parse_args():
@@ -44,6 +50,24 @@ def TimeStampToTime(timestamp):
     return time.strftime("%Y-%m-%d %H:%M:%S", timeStruct)
 
 
+def file_iterator(file_path, offset, chunk_size):
+    """
+    文件生成器
+    :param file_path: 文件绝对路径
+    :param offset: 文件读取的起始位置
+    :param chunk_size: 文件读取的块大小
+    :return: yield
+    """
+    with open(file_path, "rb") as f:
+        f.seek(offset, os.SEEK_SET)
+        while True:
+            data = f.read(chunk_size)
+            if data:
+                yield data
+            else:
+                break
+
+
 def server(static_path, prefix="/", port=8000):
     if not prefix[0] == prefix[-1] == "/":
         print(
@@ -63,8 +87,8 @@ def server(static_path, prefix="/", port=8000):
         )
 
     @app.get(prefix)
-    def index(t: int = 0):
-        html = get_file_list(static_path, t)
+    def index(show_time: bool = False, dd=""):
+        html = get_file_list(static_path, show_time, dd)
         return HTMLResponse(html)
 
     @app.get(prefix + "upload")
@@ -105,7 +129,7 @@ def server(static_path, prefix="/", port=8000):
         return response
 
     @app.get(prefix + "{filename:path}")
-    async def get_file(filename: str):
+    async def get_file(request: Request, filename: str, show_time=False, dd=""):
         path = os.path.join(static_path, filename)
         if not os.path.exists(path):
             return Response(
@@ -113,11 +137,55 @@ def server(static_path, prefix="/", port=8000):
                 status_code=404,
             )
         elif os.path.isdir(path):
-            return HTMLResponse(get_file_list(path))
-        response = FileResponse(path)
-        return response
+            return HTMLResponse(get_file_list(path, show_time, dd))
 
-    def get_file_list(path, show_time=0):
+        # 断点续传
+        stat_result = os.stat(path)
+        content_type, encoding = guess_type(path)
+        content_type = content_type or "application/octet-stream"
+        if dd == "1":
+            content_type = "application/octet-stream"
+
+        range_str = request.headers.get("range", "")
+        range_match = re.search(r"bytes=(\d+)-(\d+)", range_str, re.S) or re.search(
+            r"bytes=(\d+)-", range_str, re.S
+        )
+        if range_match:
+            start_bytes = int(range_match.group(1))
+            end_bytes = (
+                int(range_match.group(2))
+                if range_match.lastindex == 2
+                else stat_result.st_size - 1
+            )
+        else:
+            start_bytes = 0
+            end_bytes = stat_result.st_size - 1
+        # 这里 content_length 表示剩余待传输的文件字节长度
+        content_length = (
+            stat_result.st_size - start_bytes
+            if stat.S_ISREG(stat_result.st_mode)
+            else stat_result.st_size
+        )
+        # 构建文件名称
+        name, *suffix = filename.rsplit(".", 1)
+        suffix = f".{suffix[0]}" if suffix else ""
+        filename = quote(f"{name}{suffix}")  # 文件名编码，防止中文名报错
+        # 打开文件从起始位置开始分片读取文件
+        return StreamingResponse(
+            file_iterator(path, start_bytes, 1024 * 1024 * 1),  # 每次读取 1M
+            media_type=content_type,
+            headers={
+                "content-disposition": f'attachment; filename="{filename}"',
+                "accept-ranges": "bytes",
+                "connection": "keep-alive",
+                "content-length": str(content_length),
+                "content-range": f"bytes {start_bytes}-{end_bytes}/{stat_result.st_size}",
+                "last-modified": formatdate(stat_result.st_mtime, usegmt=True),
+            },
+            status_code=206 if start_bytes > 0 else 200,
+        )
+
+    def get_file_list(path, show_time: bool = False, dd: str = ""):
         sub_path = [it for it in path.replace(static_path, "").rsplit("/") if it]
         return """<html><head><style>span:hover{{background-color:#f2f2f2}}li{{weight:70%;}}</style></head><body><h2>{0}</h2><ul>{1}</ul></body></html>""".format(
             "→".join(
@@ -129,10 +197,14 @@ def server(static_path, prefix="/", port=8000):
             ),
             "\n".join(
                 [
-                    "<li><a href='{0}{1}'>{0}{1}</a>{2}</li>".format(
+                    "<li><a href='{0}{1}{3}'>{0}{1}</a>{2}</li>".format(
                         os.path.basename(it),
                         "/" if os.path.isdir(it) else "",
                         TimeStampToTime(os.path.getmtime(it)) if show_time != 0 else "",
+                        "?"
+                        + "&".join(["dd=" + dd, "show_time=" + str(show_time).lower()])
+                        if dd or show_time
+                        else "",
                     )
                     for it in glob(path + "/*")
                 ],
